@@ -2,12 +2,13 @@ package com.rodrigo.si.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
 
@@ -26,34 +27,17 @@ public class ConnectionService {
 	private EntityManager entityManager;
 
 
-	private TripRouteDTO createTripRoute(Trip tripOneStep) {
-		var tripRoute = new TripRouteDTO();
-		tripRoute.setArrival(tripOneStep.getArrival());
-		tripRoute.setDeparture(tripOneStep.getDepartureDate().atTime(tripOneStep.getDeparture()));
-		tripRoute.setDestiny(tripOneStep.getDestiny().getStation());
-		tripRoute.setOrigin(tripOneStep.getOrigin().getStation());
+	private TripConnectionDTO createTripConnection(Trip trip) {
+		var tripStep = new TripConnectionDTO();
 
-		return tripRoute;
-	}
+		tripStep.setArrival(trip.getDepartureDate().atTime(trip.getArrival()));
+		tripStep.setDeparture(trip.getDepartureDate().atTime(trip.getDeparture()));
+		tripStep.setDestiny(trip.getDestiny().getStation());
+		tripStep.setOrigin(trip.getOrigin().getStation());
+		tripStep.setCompany(trip.getCompany());
+		tripStep.setPrice(trip.getPrice());
 
-	private List<TripConnectionDTO> createTripConnections(Trip...trips) {
-		var conn = new ArrayList<TripConnectionDTO>();
-		var s = Stream.of(trips);
-
-		s.forEach(trip -> {
-			var tripStep = new TripConnectionDTO();
-
-			tripStep.setArrival(trip.getDepartureDate().atTime(trip.getArrival()));
-			tripStep.setDeparture(trip.getDepartureDate().atTime(trip.getDeparture()));
-			tripStep.setDestiny(trip.getDestiny().getStation());
-			tripStep.setOrigin(trip.getOrigin().getStation());
-			tripStep.setCompany(trip.getCompany());
-			tripStep.setPrice(trip.getPrice());
-
-			conn.add(tripStep);
-		});
-
-		return conn;
+		return tripStep;
 	}
 
 	private List<Trip> getBetweenOriginAndDetiny(String origin, String destiny, LocalDate date) {
@@ -74,60 +58,95 @@ public class ConnectionService {
 		}
 
 		query.orderBy(builder.asc(root.get("departure")));
-
 		return entityManager.createQuery(query).getResultList();
 	}
 
-	private List<Trip> getConnectionsTrips(String origin, String destiny, List<Trip> result) {
+	private List<Trip> getConnectionsTrips(String origin, String destiny, List<Trip> allTrips) {
 
-		var allOrigins = result.stream().filter(e -> e.getOrigin().getStation().equals(origin)).collect(Collectors.toList());
+		BiPredicate<Trip, String> originFilter = (e, o) -> e.getOrigin().getStation().equals(o);
+		BiPredicate<Trip, String> destinyFilter = (e, o) -> e.getDestiny().getStation().equals(o);
+		BiPredicate<Trip, Trip> hourFilter = (e, o) -> e.getDeparture().isAfter(o.getArrival());
+		BiPredicate<Trip, Trip> maximumHour = (e, o) -> e.getDeparture().getHour() - o.getArrival().getHour() <= 12;
+		Comparator<Trip> arrivalOrder = (e1, e2) ->  e1.getArrival().compareTo(e2.getArrival());
 
-		var allDestinys = result.stream().filter(e -> e.getDestiny().getStation().equals(destiny)).collect(Collectors.toList());
+		var single = allTrips.stream()
+				.filter(e -> originFilter.test(e, origin))
+				.filter(e -> destinyFilter.test(e, destiny))
+				.sorted(arrivalOrder)
+				.collect(Collectors.toList());
 
-		var isThere = allOrigins.stream().anyMatch(e -> {
-			return allDestinys.stream().anyMatch(e2 -> e2.getOrigin().getStation().equals(e.getDestiny().getStation()));
-		});
+		if ( ! single.isEmpty()) {
+			return single.subList(0, 1);
+		}
 
-		var res = new ArrayList<Trip>();
-		
-		if (isThere) {
-			for (var ori : allOrigins) {
-				for (var dest : allDestinys) {
-					res.add(ori);
-					res.add(dest);
+		var origins = allTrips.stream().filter(e -> originFilter.test(e, origin)).collect(Collectors.toList());
+
+		var nextSteps = origins.stream()
+				.flatMap(o -> {
+					var destinations = allTrips.stream()
+							.filter(e -> originFilter.test(e, o.getDestiny().getStation()))
+							.filter(e -> hourFilter.test(e, o))
+							.filter(e -> maximumHour.test(e, o))
+							.collect(Collectors.toList());
+					return destinations.isEmpty() ? null : destinations.stream();
+				})
+				.filter(Objects::nonNull)
+				.sorted(arrivalOrder)
+				.collect(Collectors.toList());
+
+		var finalResult = new ArrayList<Trip>();
+
+		if ( ! nextSteps.isEmpty()) {
+			var result = nextSteps.stream()
+					.filter(e -> destinyFilter.test(e, destiny))
+					.sorted(arrivalOrder)
+					.collect(Collectors.toList());
+
+			if (result.isEmpty()) {
+				for (var re : nextSteps) {
+
+					var res = getConnectionsTrips(re.getDestiny().getStation(), destiny, allTrips);
+					if (res.stream().anyMatch(e -> destinyFilter.test(e, destiny))) {
+						finalResult.addAll(res);
+						finalResult.add(re);
+						finalResult.addAll(origins.stream()
+								.filter(e -> destinyFilter.test(e, re.getOrigin().getStation()))
+								.filter(e -> hourFilter.test(re, e))
+								.filter(e -> maximumHour.test(re, e))
+								.sorted(arrivalOrder)
+								.collect(Collectors.toList()));
+						break;
+					}
 				}
-			}
-		} else {
-			var allOthers = result.stream().filter(e -> ! e.getOrigin().getStation().equals(origin)).collect(Collectors.toList());
-			for (Trip e : allOrigins) {
-				res.addAll(getConnectionsTrips(e.getOrigin().getStation(), e.getDestiny().getStation(), allOthers));
+			} else {
+				finalResult.addAll(result.subList(0, 1));
 			}
 		}
-		return res;
+		return finalResult;
 	}
 
 	public Optional<TripRouteDTO> getConnectionTrip(TripQueryDTO trip) {
 
 		var result = getBetweenOriginAndDetiny(trip.getOrigin(), trip.getDestiny(), trip.getDate());
 
-		// First of all, try to find a straight trip
-		Predicate<Trip> originPred = e -> e.getOrigin().getStation().equals(trip.getOrigin());
-		Predicate<Trip> destinyPred = e -> e.getDestiny().getStation().equals(trip.getDestiny());
-
-		if (result.stream().anyMatch(originPred.and(destinyPred))) {
-			var tripOneStep = result.stream().filter(originPred.and(destinyPred)).collect(Collectors.toList()).get(0);
-
-			var tripRoute = createTripRoute(tripOneStep);
-
-			tripRoute.setTripConnections(createTripConnections(tripOneStep));
-
-			return Optional.of(tripRoute);
-		}
-
-		// If doesn't exist a straight trip, them let's search for steps between origin and destiny
-		// TODO: implement parser to tripRoute
 		var finalResult = getConnectionsTrips(trip.getOrigin(), trip.getDestiny(), result);
+		
+		if (finalResult.isEmpty()) {
+			return Optional.ofNullable(null);
+		}
+		Collections.reverse(result);
 
-		return Optional.of(new TripRouteDTO());
+		var tripRoute = new TripRouteDTO();
+
+		tripRoute.setArrival(finalResult.get(finalResult.size()-1).getArrival());
+		tripRoute.setDeparture(finalResult.get(0).getDepartureDate().atTime(finalResult.get(0).getDeparture()));
+		tripRoute.setDestiny(finalResult.get(0).getDestiny().getStation());
+		tripRoute.setOrigin(finalResult.get(0).getOrigin().getStation());
+
+		var connections = finalResult.stream().map(e -> createTripConnection(e)).collect(Collectors.toList());
+
+		tripRoute.setTripConnections(connections);
+		
+		return Optional.of(tripRoute);
 	}
 }
