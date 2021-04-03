@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rodrigo.si.resource.projection.TripQueryDTO;
 import com.rodrigo.si.resource.projection.TripRouteDTO;
-import com.rodrigo.si.service.ConnectionService;
+import com.rodrigo.si.service.connection.ConnectionService;
 
 @RestController
 @RequestMapping("/trip/connection")
