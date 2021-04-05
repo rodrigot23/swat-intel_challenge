@@ -45,4 +45,9 @@ public class Trip {
 	@Column(nullable=false)
 	private BigDecimal price;
 	
+	
+	@Override
+	public String toString() {
+		return origin.getStation() +"\t"+ destiny.getStation() +"\t"+ departureDate +"\t"+ departure +"\t"+ arrival;
+	}
 }
