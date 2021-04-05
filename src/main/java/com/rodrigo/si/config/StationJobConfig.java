@@ -53,7 +53,7 @@ public class StationJobConfig {
 		
 		return new JsonItemReaderBuilder<Station>()
 				.jsonObjectReader(jsonObjectReader)
-				.resource(new FileSystemResource("src/main/resources/backend-aptitude-challenge-main/trainStations.json"))
+				.resource(new FileSystemResource("src/test/java/resources/backend-aptitude-challenge-main/trainStations.json"))
 				.name("station-reader")
 				.build();
 	}

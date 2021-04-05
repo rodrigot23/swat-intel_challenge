@@ -58,7 +58,7 @@ public class CsvJobConfig {
 	@Bean("csvTripReader")
 	public FlatFileItemReader<Trip> itemReader(@Qualifier("lineMapper") LineMapper<Trip> lineMapper) {
 		var fileItemReader = new FlatFileItemReader<Trip>();
-		fileItemReader.setResource(new FileSystemResource("src/main/resources/backend-aptitude-challenge-main/iTrain.csv"));
+		fileItemReader.setResource(new FileSystemResource("src/test/java/resources/backend-aptitude-challenge-main/iTrain.csv"));
 		fileItemReader.setName("itrain-reader");
 		fileItemReader.setLinesToSkip(1);
 		fileItemReader.setLineMapper(lineMapper);

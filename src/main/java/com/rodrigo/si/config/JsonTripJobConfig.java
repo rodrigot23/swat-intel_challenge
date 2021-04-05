@@ -57,13 +57,13 @@ public class JsonTripJobConfig {
 		var objectMapper = new ObjectMapper();
 		
 		@SuppressWarnings("unchecked")
-		var jsonObjectReader = new JacksonJsonObjectReader<Map<String, Object>>((Class<? extends Map<String, Object>>) HashMap.class);
+		var jsonObjectReader = new JacksonJsonObjectReader<Map<String, Object>>((Class<? extends Map<String, Object>>) new HashMap<String, Object>().getClass());
 
 		jsonObjectReader.setMapper(objectMapper);
 		
 		return new JsonItemReaderBuilder<Map<String, Object>>()
 				.jsonObjectReader(jsonObjectReader)
-				.resource(new FileSystemResource("src/main/resources/backend-aptitude-challenge-main/uberOnRails.json"))
+				.resource(new FileSystemResource("src/test/java/resources/backend-aptitude-challenge-main/uberOnRails.json"))
 				.name("uberonrails-reader")
 				.build();
 	}
