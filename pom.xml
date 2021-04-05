@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.rodrigo</groupId>
 	<artifactId>swat-intel_challenge</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2</version>
 	<name>swat-intel_chalenge</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
@@ -34,7 +34,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-parent</artifactId>
+			<version>2.4.4</version>
+			<type>pom</type>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
