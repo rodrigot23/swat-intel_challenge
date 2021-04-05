@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class TripQueryDTO {
+public class TripQuery {
 
 	private String origin;
 	private String destiny;
