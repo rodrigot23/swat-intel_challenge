@@ -13,16 +13,29 @@ import com.rodrigo.si.model.Trip;
 
 public interface TripRepository extends JpaRepository<Trip, String>{
 
-	@Query("select t from trip t where (t.origin.station = :ori or t.destiny.station = :dest) "
+	@Query("select min(t.departure) from trip t "
+			+ "where (t.origin.station = :ori or t.destiny.station = :dest) "
 			+ "and (:depart is null or t.departureDate = :depart)")
-	Optional<List<Trip>> findByOriginAndDestinyAndDeparture(
+	Optional<LocalTime> findMinDepartureTime(
 			@Param("ori") String origin, 
 			@Param("dest") String destiny, 
 			@Param("depart") LocalDate departure);
 	
-	@Query("select t from trip t where t.departure > :depart and t.arrival < :arrival ")
+	@Query("select max(t.arrival) from trip t "
+			+ "where (t.origin.station = :ori or t.destiny.station = :dest) "
+			+ "and (:depart is null or t.departureDate = :depart)")
+	Optional<LocalTime> findMaxArrivalTime(
+			@Param("ori") String origin, 
+			@Param("dest") String destiny, 
+			@Param("depart") LocalDate departure);
+	
+	
+	@Query("select t from trip t "
+			+ "where t.departure >= :depart and t.arrival <= :arrival "
+			+ "and (:departDate is null or t.departureDate = :departDate)")
 	Optional<List<Trip>> findByDepartureGreateThanAndArrivalLessThan(
 			@Param("depart") LocalTime departure, 
-			@Param("arrival") LocalTime arrival);
+			@Param("arrival") LocalTime arrival,
+			@Param("departDate") LocalDate departureDate);
 	
 }
