@@ -1,5 +1,7 @@
 package com.rodrigo.si.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +23,10 @@ import com.rodrigo.si.model.repository.StationRepository;
 import com.rodrigo.si.model.repository.TripRepository;
 import com.rodrigo.si.resource.projection.TripDTO;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class TripService {
 
 	@Autowired
@@ -35,11 +40,11 @@ public class TripService {
 
 	@Autowired
 	@Qualifier("csvTripJob")
-	private Job job;
+	private Job job_csv;
 
 	@Autowired
 	@Qualifier("jsonTripJob")
-	private Job json;
+	private Job job_json;
 
 	public void save(TripDTO tripDTO) throws Exception {
 		var trip = tripDTO.toTripEntity();
@@ -62,20 +67,44 @@ public class TripService {
 		tripRep.save(trip);
 	}
 
-	public BatchStatus batchCsv(MultipartFile file, String company) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+	public BatchStatus batchCsv(MultipartFile file, String company) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException, InterruptedException {
+
+		var path = Files.write(Files.createTempFile("trip_csv", file.getName()), file.getBytes());
+		
 		var jobParamBuilder = new JobParametersBuilder();
 		jobParamBuilder.addLong("time", System.currentTimeMillis());
 		jobParamBuilder.addString("company", company);
+		jobParamBuilder.addString("path_csv", path.toString());
 
-		return jobLauncher.run(job, jobParamBuilder.toJobParameters()).getStatus();
+		var jobExecution = jobLauncher.run(job_csv, jobParamBuilder.toJobParameters());
+		
+		log.debug("JobExecution (trip_csv): " + jobExecution.getStatus());
+
+		log.debug("Batch is Running...");
+		while (jobExecution.isRunning()) Thread.sleep(500);
+		log.debug("Batch finished!");
+		
+		return jobExecution.getStatus();
 	}
 
-	public BatchStatus batchJson(MultipartFile file, String company) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+	public BatchStatus batchJson(MultipartFile file, String company) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException, InterruptedException {
+		
+		var path = Files.write(Files.createTempFile("trip_json", file.getName()), file.getBytes());
+		
 		var jobParamBuilder = new JobParametersBuilder();
 		jobParamBuilder.addLong("time", System.currentTimeMillis());
 		jobParamBuilder.addString("company", company);
+		jobParamBuilder.addString("path_json", path.toString());
 
-		return jobLauncher.run(json, jobParamBuilder.toJobParameters()).getStatus();
+		var jobExecution = jobLauncher.run(job_json, jobParamBuilder.toJobParameters());
+		
+		log.debug("JobExecution (trip_json): " + jobExecution.getStatus());
+
+		log.debug("Batch is Running...");
+		while (jobExecution.isRunning()) Thread.sleep(500);
+		log.debug("Batch finished!");
+		
+		return jobExecution.getStatus();
 	}
 
 	public Optional<List<Trip>> listAll() {

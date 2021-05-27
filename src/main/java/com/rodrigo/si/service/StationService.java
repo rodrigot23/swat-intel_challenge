@@ -1,6 +1,7 @@
 package com.rodrigo.si.service;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,7 +25,10 @@ import com.rodrigo.si.model.Station;
 import com.rodrigo.si.model.repository.StationRepository;
 import com.rodrigo.si.resource.projection.StationDTO;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class StationService {
 
 	@Autowired
@@ -66,19 +70,21 @@ public class StationService {
 		stationRep.save(station);
 	}
 	
-	public BatchStatus batchJson(MultipartFile file) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException {
+	public BatchStatus batchJson(MultipartFile file) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException, InterruptedException {
+
+		var path = Files.write(Files.createTempFile("station_json", file.getName()), file.getBytes());
+		
 		var jobParamBuilder = new JobParametersBuilder();
 		jobParamBuilder.addLong("time", System.currentTimeMillis());
+		jobParamBuilder.addString("station_json", path.toString());
 		
 		var jobExecution = jobLauncher.run(job, jobParamBuilder.toJobParameters());
+		log.debug("JobExecution (Station): " + jobExecution.getStatus());
 
-		System.out.println("JobExecution: " + jobExecution.getStatus());
-
-		System.out.println("Batch is Running...");
-		while (jobExecution.isRunning()) {
-			System.out.println("...");
-		}
-
+		log.debug("Batch is Running...");
+		while (jobExecution.isRunning()) Thread.sleep(500);
+		log.debug("Batch finished!");
+		
 		return jobExecution.getStatus();
 	}
 }

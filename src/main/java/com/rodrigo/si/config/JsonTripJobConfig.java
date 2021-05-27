@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemProcessor;
@@ -16,6 +17,7 @@ import org.springframework.batch.item.json.JsonItemReader;
 import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -53,7 +55,8 @@ public class JsonTripJobConfig {
 	}
 	
 	@Bean("jsonTripReader")
-	public JsonItemReader<Map<String, Object>> itemReader() {
+	@JobScope
+	public JsonItemReader<Map<String, Object>> itemReader(@Value("#{jobParameters['path_json']}") String path) {
 		var objectMapper = new ObjectMapper();
 		
 		@SuppressWarnings("unchecked")
@@ -63,7 +66,7 @@ public class JsonTripJobConfig {
 		
 		return new JsonItemReaderBuilder<Map<String, Object>>()
 				.jsonObjectReader(jsonObjectReader)
-				.resource(new FileSystemResource("src/test/java/resources/backend-aptitude-challenge-main/uberOnRails.json"))
+				.resource(new FileSystemResource(path))
 				.name("uberonrails-reader")
 				.build();
 	}

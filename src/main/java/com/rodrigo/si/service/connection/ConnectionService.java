@@ -16,7 +16,10 @@ import com.rodrigo.si.resource.projection.TripConnectionDTO;
 import com.rodrigo.si.resource.projection.TripQuery;
 import com.rodrigo.si.resource.projection.TripRouteDTO;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class ConnectionService {
 
 	@Autowired
@@ -26,6 +29,7 @@ public class ConnectionService {
 	private ConnectionOperation connectionOperation;
 
 	private Optional<List<Trip>> getBetweenOriginAndDestiny(String origin, String destiny, LocalDate date) {
+		log.debug("Getting trips between origin and destiny from database");
 		var minDeparture = tripRepository.findMinDepartureTime(origin, destiny, date);
 		var maxArrival = tripRepository.findMaxArrivalTime(origin, destiny, date);
 
@@ -71,7 +75,7 @@ public class ConnectionService {
 			})
 			// filter by the elements who have a destiny
 			.filter(e -> connectionOperation.thereIsDestiny((List<Trip>)e.get(0), destiny))
-			// we need to take the first destiny, that is the shorted as long as it was sorted by arrival time before
+			// we need to take the first destiny, that is the shortest as long as it was sorted by arrival time before
 //			.findFirst()
 //			.stream()
 			.forEach(e -> {

@@ -47,7 +47,7 @@ public class StationResource {
 	
 	@PostMapping("/json")
 	@ResponseStatus(HttpStatus.CREATED)
-	public void saveJsonFile(@RequestParam("file") MultipartFile file) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException {
+	public void saveJsonFile(@RequestParam("file") MultipartFile file) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException, InterruptedException {
 		stationResource.batchJson(file);
 	}
 }

@@ -1,5 +1,6 @@
 package com.rodrigo.si.config;
 
+import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -7,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -41,7 +43,9 @@ public class CsvJobConfig {
 	private StationRepository stationRep;
 	
 	@Bean("csvTripJob")
-	public Job job(@Qualifier("csvTripWriter") ItemWriter<Trip> writer, @Qualifier("csvTripReader") ItemReader<Trip> itemReader) {
+	public Job job(
+			@Qualifier("csvTripWriter") ItemWriter<Trip> writer, 
+			@Qualifier("csvTripReader") ItemReader<Trip> itemReader) {
 		
 		var step = stepBuilderFactory.get("csv_step")
 				.<Trip, Trip>chunk(100)
@@ -56,17 +60,25 @@ public class CsvJobConfig {
 	}
 	
 	@Bean("csvTripReader")
-	public FlatFileItemReader<Trip> itemReader(@Qualifier("lineMapper") LineMapper<Trip> lineMapper) {
+	@JobScope
+	public FlatFileItemReader<Trip> itemReader(
+			@Qualifier("lineMapper") LineMapper<Trip> lineMapper,
+			@Value("#{jobParameters['path_csv']}") String path) throws MalformedURLException {
+		
 		var fileItemReader = new FlatFileItemReader<Trip>();
-		fileItemReader.setResource(new FileSystemResource("src/test/java/resources/backend-aptitude-challenge-main/iTrain.csv"));
+		fileItemReader.setResource(new FileSystemResource(path));
 		fileItemReader.setName("itrain-reader");
 		fileItemReader.setLinesToSkip(1);
 		fileItemReader.setLineMapper(lineMapper);
+		fileItemReader.setStrict(false);
 		return fileItemReader;
 	}
 	
 	@Bean("lineMapper")
-	public LineMapper<Trip> lineMapper(@Qualifier("fieldSetMapper")  FieldSetMapper<Trip> fieldSetMapper) {
+	@StepScope
+	public LineMapper<Trip> lineMapper(
+			@Qualifier("fieldSetMapper") FieldSetMapper<Trip> fieldSetMapper) {
+		
 		var tokenizer = new DelimitedLineTokenizer();
 		tokenizer.setDelimiter(",");
 		tokenizer.setStrict(false);

@@ -3,6 +3,7 @@ package com.rodrigo.si.config;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
@@ -12,6 +13,7 @@ import org.springframework.batch.item.json.JsonItemReader;
 import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -45,7 +47,8 @@ public class StationJobConfig {
 	}
 	
 	@Bean("stationReader")
-	public JsonItemReader<Station> itemReader() {
+	@JobScope
+	public JsonItemReader<Station> itemReader(@Value("#{jobParameters['station_json']}") String path) {
 		var objectMapper = new ObjectMapper();
 		
 		var jsonObjectReader = new JacksonJsonObjectReader<Station>(Station.class);
@@ -53,7 +56,7 @@ public class StationJobConfig {
 		
 		return new JsonItemReaderBuilder<Station>()
 				.jsonObjectReader(jsonObjectReader)
-				.resource(new FileSystemResource("src/test/java/resources/backend-aptitude-challenge-main/trainStations.json"))
+				.resource(new FileSystemResource(path))
 				.name("station-reader")
 				.build();
 	}
