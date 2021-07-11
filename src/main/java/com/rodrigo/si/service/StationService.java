@@ -18,6 +18,9 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +46,13 @@ public class StationService {
 	@Autowired
 	@Qualifier("stationJob")
 	private Job job;
+	
+	public Page<Station> getAllStations(Integer page) {
+		
+		Pageable pageable = PageRequest.of(page, 5);
+		
+		return stationRep.findAll(pageable);
+	}
 	
 	public Optional<List<StationDTO>> getStationsByName(String name) {
 		var builder = entityManager.getCriteriaBuilder();
