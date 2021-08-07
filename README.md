@@ -19,3 +19,7 @@ https://github.com/JoaoSouza982/backend-challenge
 
 - `cd target`
 - `java -jar swat-intel_challenge-0.0.2.jar`.
+
+## Usage
+
+- http://localhost:8081/swagger-ui.html
