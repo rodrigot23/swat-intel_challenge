@@ -32,10 +32,11 @@ public class StationResourceTest {
 	@Order(1)
 	public void uploadStationsTest() throws Exception {
 		var fileBytes = getClass()
-				.getResourceAsStream("/resources/backend-aptitude-challenge-main/trainStations.json")
+				.getClassLoader()
+				.getResourceAsStream("trainStations.json")
 				.readAllBytes();
 		
-		mvc.perform(multipart("/station/json").file("file", fileBytes))
+		mvc.perform(multipart("/api/station/json").file("file", fileBytes))
 		   .andExpect(status().isCreated());
 	}
 
@@ -51,7 +52,7 @@ public class StationResourceTest {
 		var json = new JSONObject(body);
 		
 		mvc.perform(
-				post("/station")
+				post("/api/station")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json.toString()))
 			.andExpect(status().isCreated());
@@ -61,7 +62,7 @@ public class StationResourceTest {
 	@Order(3)
 	public void saveStationsAndGetStationsByNameTest() throws Exception {
 		
-		mvc.perform(get("/station/juscelino"))
+		mvc.perform(get("/api/station/juscelino"))
 		   .andExpect(status().isOk())
 		   .andExpect(jsonPath("$.[0].name", is("Estação Juscelino Kubitschek")))
 		   .andExpect(jsonPath("$.[0].station", is("BSB")))
