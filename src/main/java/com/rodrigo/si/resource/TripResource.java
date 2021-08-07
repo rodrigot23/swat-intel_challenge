@@ -21,8 +21,11 @@ import com.rodrigo.si.resource.projection.TripRouteDTO;
 import com.rodrigo.si.service.TripService;
 import com.rodrigo.si.service.connection.ConnectionService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @RestController
-@RequestMapping("/trip")
+@RequestMapping("/api/trip")
 public class TripResource {
 
 	@Autowired
@@ -37,20 +40,33 @@ public class TripResource {
 		tripServ.save(trip);
 	}
 	
-	@PostMapping("/csv")
 	@ResponseStatus(HttpStatus.CREATED)
-	public void saveTripCsv(@RequestParam("file") MultipartFile file, @RequestParam String company) throws Exception {
+	@Operation(description = "This persist all trips from a json file."
+			+ "<br> (file_example_path: '/src/test/java/resources/iTrain.csv')")
+	@PostMapping(value = "/csv", consumes= {"multipart/form-data"})
+	public void saveTripCsv(
+			@RequestParam("file") MultipartFile file, 
+			@Schema(example = "ITrain") @RequestParam String company) throws Exception {
+		
 		tripServ.batchCsv(file, company);
 	}
 	
-	@PostMapping("/json")
 	@ResponseStatus(HttpStatus.CREATED)
-	public void saveTripJson(@RequestParam("file") MultipartFile file, @RequestParam String company) throws Exception {
+	@Operation(description = "This persist all trips from a json file."
+			+ "<br> (file_example_path: '/src/test/java/resources/uberOnRails.json')")
+	@PostMapping(value = "/json", consumes= {"multipart/form-data"})
+	public void saveTripJson(
+			@RequestParam("file") MultipartFile file, 
+			@Schema(example = "UberOnRails") @RequestParam String company) throws Exception {
+		
 		tripServ.batchJson(file, company);
 	}
 	
 	@GetMapping("/connection")
-	public ResponseEntity<TripRouteDTO> getConnectionTrip(@RequestParam String origin, @RequestParam String destiny, @RequestParam(required=false) @DateTimeFormat(pattern="dd/MM/yyyy") LocalDate date) {
+	public ResponseEntity<TripRouteDTO> getConnectionTrip(
+			@Schema(example = "BSB") @RequestParam String origin, 
+			@Schema(example = "FLN") @RequestParam String destiny, 
+			@RequestParam(required=false) @DateTimeFormat(pattern="dd/MM/yyyy") LocalDate date) {
 		
 		var trip = new TripQuery();
 		trip.setOrigin(origin);
