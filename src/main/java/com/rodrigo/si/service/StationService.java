@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -80,7 +81,7 @@ public class StationService {
 		stationRep.save(station);
 	}
 	
-	public BatchStatus batchJson(MultipartFile file) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, IOException, InterruptedException {
+	public BatchStatus batchJson(MultipartFile file) throws JobParametersInvalidException, IOException, InterruptedException {
 
 		var path = Files.write(Files.createTempFile("station_json", file.getName()), file.getBytes());
 		
@@ -88,13 +89,16 @@ public class StationService {
 		jobParamBuilder.addLong("time", System.currentTimeMillis());
 		jobParamBuilder.addString("station_json", path.toString());
 		
-		var jobExecution = jobLauncher.run(job, jobParamBuilder.toJobParameters());
-		log.debug("JobExecution (Station): " + jobExecution.getStatus());
-
-		log.debug("Batch is Running...");
-		while (jobExecution.isRunning()) Thread.sleep(500);
-		log.debug("Batch finished!");
-		
+		JobExecution jobExecution = null;
+		try {
+			jobExecution = jobLauncher.run(job, jobParamBuilder.toJobParameters());
+			log.debug("JobExecution (Station): " + jobExecution.getStatus());
+			log.debug("Batch is Running...");
+			while (jobExecution.isRunning()) Thread.sleep(500);
+			log.debug("Batch finished!");
+		} catch (JobExecutionAlreadyRunningException|JobRestartException|JobInstanceAlreadyCompleteException e) {
+			log.error(e.getMessage());
+		}
 		return jobExecution.getStatus();
 	}
 }
