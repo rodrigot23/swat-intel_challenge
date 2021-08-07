@@ -61,11 +61,15 @@
 			<artifactId>spring-batch-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.5.2</version>
 		</dependency>
 	</dependencies>
 
@@ -84,6 +88,12 @@
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<testResources>
+            <testResource>
+                <directory>src/test/java/resources</directory>
+            </testResource>
+        </testResources>
 	</build>
 
 </project>

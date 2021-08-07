@@ -2,6 +2,7 @@ package com.rodrigo.si.resource.projection;
 
 import com.rodrigo.si.model.Station;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,8 +12,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StationDTO {
 
+	@Schema(example = "Estação Juscelino Kubitschek")
 	private String name;
+	@Schema(example = "BSB")
 	private String station;
+	@Schema(example = "Brasília")
 	private String city;
 	
 	

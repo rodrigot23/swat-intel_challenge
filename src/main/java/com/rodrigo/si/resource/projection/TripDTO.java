@@ -7,6 +7,7 @@ import java.time.LocalTime;
 import com.rodrigo.si.model.Station;
 import com.rodrigo.si.model.Trip;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,13 +15,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TripDTO {
 
+	@Schema(example = "P243B976")
 	private String trip;
+	@Schema(example = "BSB")
 	private String origin;
+	@Schema(example = "VCP")
 	private String destiny;
+	@Schema(example = "2021-07-10")
 	private LocalDate departureDate;
+	@Schema(example = "06:40")
 	private LocalTime departure;
+	@Schema(example = "19:40")
 	private LocalTime arrival;
+	@Schema(example = "ITrain")
 	private String company;
+	@Schema(example = "948.46")
 	private BigDecimal value;
 	
 	

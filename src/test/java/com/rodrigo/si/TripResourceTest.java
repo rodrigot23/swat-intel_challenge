@@ -35,14 +35,14 @@ public class TripResourceTest {
 		tripResourceTest.mvc = mvc;
 		tripResourceTest.uploadStationsTest();
 
-		var fileBytes = getClass().getResourceAsStream("/resources/backend-aptitude-challenge-main/iTrain.csv").readAllBytes();
+		var fileBytes = getClass().getClassLoader().getResourceAsStream("iTrain.csv").readAllBytes();
 		
-		mvc.perform(multipart("/trip/csv").file("file", fileBytes).param("company", "iTrain"))
+		mvc.perform(multipart("/api/trip/csv").file("file", fileBytes).param("company", "iTrain"))
 		   .andExpect(status().isCreated());
 		
-		fileBytes = getClass().getResourceAsStream("/resources/backend-aptitude-challenge-main/uberOnRails.json").readAllBytes();
+		fileBytes = getClass().getClassLoader().getResourceAsStream("uberOnRails.json").readAllBytes();
 		
-		mvc.perform(multipart("/trip/json").file("file", fileBytes).param("company", "uberOnRails"))
+		mvc.perform(multipart("/api/trip/json").file("file", fileBytes).param("company", "uberOnRails"))
 		   .andExpect(status().isCreated());
 	}
 	
@@ -63,7 +63,7 @@ public class TripResourceTest {
 	    
 	    var json = new JSONObject(body);
 		
-	    mvc.perform(post("/trip").contentType(MediaType.APPLICATION_JSON).content(json.toString()))
+	    mvc.perform(post("/api/trip").contentType(MediaType.APPLICATION_JSON).content(json.toString()))
 	       .andExpect(status().isCreated());
 	}
 	
@@ -71,7 +71,7 @@ public class TripResourceTest {
 	@Order(3)
 	public void singleConnectionTest() throws Exception {
 		
-		mvc.perform(get("/trip/connection").param("origin", "BSB").param("destiny", "MCZ"))
+		mvc.perform(get("/api/trip/connection").param("origin", "BSB").param("destiny", "MCZ"))
 		   .andExpect(status().isOk())
 		   .andExpect(jsonPath("$.origin", is("BSB")))
 		   .andExpect(jsonPath("$.destiny", is("MCZ")))
@@ -89,7 +89,7 @@ public class TripResourceTest {
 	@Order(4)
 	public void twoConnectionTest() throws Exception {
 		
-		mvc.perform(get("/trip/connection").param("origin", "VIX").param("destiny", "FLN"))
+		mvc.perform(get("/api/trip/connection").param("origin", "VIX").param("destiny", "FLN"))
 		   .andExpect(status().isOk())
 		   .andExpect(jsonPath("$.origin", is("VIX")))
 		   .andExpect(jsonPath("$.destiny", is("FLN")))
@@ -113,7 +113,7 @@ public class TripResourceTest {
 	@Order(5)
 	public void notFoundConnectionTest() throws Exception {
 		
-		mvc.perform(get("/trip/connection").param("origin", "MCZ").param("destiny", "VCP"))
+		mvc.perform(get("/api/trip/connection").param("origin", "MCZ").param("destiny", "VCP"))
 		   .andExpect(status().isNoContent());
 		
 	}
@@ -122,7 +122,7 @@ public class TripResourceTest {
 	@Order(6)
 	public void notFoundConnectionWithDateTest() throws Exception {
 		
-		mvc.perform(get("/trip/connection").param("origin", "BSB").param("destiny", "MCZ").param("date", "19/02/2021"))
+		mvc.perform(get("/api/trip/connection").param("origin", "BSB").param("destiny", "MCZ").param("date", "19/02/2021"))
 		   .andExpect(status().isNoContent());
 	}
 }
